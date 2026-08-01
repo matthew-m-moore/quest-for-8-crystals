@@ -1,19 +1,24 @@
+// Docked below the HUD at the top of the screen, out of the way of
+// character sprites (which live in the lower two-thirds of the frame).
+const BOX_TOP = 54;
+const BOX_HEIGHT = 118;
+
 export class DialogueBox {
   constructor(scene) {
     this.scene = scene;
     const w = scene.scale.width;
-    const h = scene.scale.height;
+    const boxCenterY = BOX_TOP + BOX_HEIGHT / 2;
     this.container = scene.add.container(0, 0).setDepth(1000);
 
-    this.bg = scene.add.rectangle(w / 2, h - 90, w - 40, 140, 0xffffff, 0.96)
+    this.bg = scene.add.rectangle(w / 2, boxCenterY, w - 40, BOX_HEIGHT, 0xffffff, 0.96)
       .setStrokeStyle(4, 0x333333);
-    this.nameText = scene.add.text(40, h - 150, '', {
+    this.nameText = scene.add.text(40, BOX_TOP + 10, '', {
       fontSize: '20px', fontStyle: 'bold', color: '#333333',
     });
-    this.bodyText = scene.add.text(40, h - 122, '', {
+    this.bodyText = scene.add.text(40, BOX_TOP + 38, '', {
       fontSize: '22px', color: '#222222', wordWrap: { width: w - 100 },
     });
-    this.hint = scene.add.text(w - 60, h - 30, '▼', {
+    this.hint = scene.add.text(w - 60, BOX_TOP + BOX_HEIGHT - 28, '▼', {
       fontSize: '18px', color: '#888888',
     });
     this.container.add([this.bg, this.nameText, this.bodyText, this.hint]);
@@ -22,7 +27,7 @@ export class DialogueBox {
     this._typeTimer = null;
     this._onAdvance = null;
 
-    this.zone = scene.add.zone(w / 2, h - 90, w - 40, 140).setInteractive();
+    this.zone = scene.add.zone(w / 2, boxCenterY, w - 40, BOX_HEIGHT).setInteractive();
     this.zone.on('pointerdown', () => this._advanceOrSkip());
     this.container.add(this.zone);
 

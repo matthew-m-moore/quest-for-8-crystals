@@ -155,7 +155,7 @@ export const tutorialScript = [
   { type: 'sprite', id: 't2', texture: 'tombstone', x: 820, y: 440, scale: 1 },
   { type: 'sprite', id: 'hero', texture: 'hero', x: 540, y: 420, scale: 1 },
   { type: 'say', speaker: 'You', text: "I'm scared." },
-  { type: 'sprite', id: 'ghost', texture: 'ghost', x: 540, y: 220, scale: 1 },
+  { type: 'sprite', id: 'ghost', texture: 'ghost', x: 540, y: 260, scale: 1 },
   { type: 'say', speaker: 'You', text: 'wait...' },
   { type: 'say', speaker: 'You', text: 'bruh.' },
   { type: 'say', speaker: 'You', text: 'Brr — why is it so cold?' },
