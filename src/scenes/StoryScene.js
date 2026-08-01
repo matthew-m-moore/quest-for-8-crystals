@@ -20,6 +20,9 @@ export class StoryScene extends Phaser.Scene {
     this.sky = this.add.rectangle(w / 2, h / 2, w, h, 0xffffff).setDepth(-100);
     this.ground = this.add.rectangle(w / 2, h - 70, w, 140, 0x00ff00).setDepth(-90).setVisible(false);
     this.starLayer = this.add.container(0, 0).setDepth(-95);
+    // The black star is a fixed background element that foreshadows Planet
+    // Blackstar — present in most scenes once it's first spotted (see script.js).
+    this.blackStar = this.add.image(w - 130, 110, 'black_star_icon').setDepth(-94).setVisible(false);
     this.sprites = {};
     this.dialogue = new DialogueBox(this);
     this.overlay = this.add.container(0, 0).setDepth(1400);
@@ -79,10 +82,12 @@ export class StoryScene extends Phaser.Scene {
     }
   }
 
-  stepBg({ sky, ground, stars }) {
+  stepBg({ sky, ground, stars, blackstar }) {
     if (sky) this.sky.setFillStyle(hexNum(sky));
     if (ground) this.ground.setVisible(true).setFillStyle(hexNum(ground));
     else this.ground.setVisible(false);
+
+    this.blackStar.setVisible(!!blackstar);
 
     this.starLayer.removeAll(true);
     if (stars) {

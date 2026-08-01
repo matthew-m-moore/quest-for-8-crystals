@@ -91,6 +91,31 @@ function staff(g, x, y, angle = -15, scale = 1) {
   g.restore();
 }
 
+function lightningStaff(g, x, y, angle = 0, scale = 1) {
+  g.save();
+  g.translateCanvas(x, y);
+  g.rotateCanvas(Phaser.Math.DegToRad(angle));
+  g.scaleCanvas(scale, scale);
+  g.lineStyle(5, 0x555555, 1);
+  g.beginPath();
+  g.moveTo(0, 0);
+  g.lineTo(0, -70);
+  g.strokePath();
+  g.lineStyle(4, 0x998800, 1);
+  g.fillStyle(0xffee00, 1);
+  g.beginPath();
+  g.moveTo(-6, -70);
+  g.lineTo(14, -115);
+  g.lineTo(0, -115);
+  g.lineTo(16, -160);
+  g.lineTo(-14, -110);
+  g.lineTo(0, -110);
+  g.closePath();
+  g.fillPath();
+  g.strokePath();
+  g.restore();
+}
+
 function star5(g, cx, cy, outerR, innerR, fill, stroke) {
   const points = [];
   for (let i = 0; i < 10; i++) {
@@ -108,6 +133,29 @@ function star5(g, cx, cy, outerR, innerR, fill, stroke) {
   g.strokePath();
 }
 
+function spikyBurst(g, cx, cy, outerR, innerR, fill, points = 12) {
+  const pts = [];
+  for (let i = 0; i < points * 2; i++) {
+    const r = i % 2 === 0 ? outerR : innerR;
+    const a = Phaser.Math.DegToRad((360 / (points * 2)) * i);
+    pts.push(cx + Math.cos(a) * r, cy + Math.sin(a) * r);
+  }
+  g.fillStyle(fill, 1);
+  g.beginPath();
+  g.moveTo(pts[0], pts[1]);
+  for (let i = 2; i < pts.length; i += 2) g.lineTo(pts[i], pts[i + 1]);
+  g.closePath();
+  g.fillPath();
+}
+
+function cloudPuff(g, cx, cy, fill, alpha = 1) {
+  g.fillStyle(fill, alpha);
+  g.fillCircle(cx - 14, cy + 4, 12);
+  g.fillCircle(cx, cy - 4, 14);
+  g.fillCircle(cx + 14, cy + 4, 11);
+  g.fillRect(cx - 14, cy, 28, 12);
+}
+
 export function registerTextures(scene) {
   const g = scene.add.graphics();
   const make = (key, w, h, drawFn) => {
@@ -123,6 +171,12 @@ export function registerTextures(scene) {
 
   make('hero_face', 110, 110, () => {
     face(g, 55, 55, 46, { fill: 0xeaeaea });
+  });
+
+  make('hero_staff', 240, 200, () => {
+    face(g, 115, 85, 46, { fill: 0xeaeaea });
+    sword(g, 178, 148, 25, 1);
+    staff(g, 32, 190, -12, 0.85);
   });
 
   make('grunt', 110, 110, () => {
@@ -146,23 +200,21 @@ export function registerTextures(scene) {
     staff(g, 120, 175, -10, 0.85);
   });
 
-  make('goliath', 170, 190, () => {
-    star5(g, 90, 100, 78, 32, 0x00e5ff, 0x008fa3);
-    g.fillStyle(0xffffff, 1);
-    g.fillEllipse(72, 95, 18, 26);
-    g.fillEllipse(104, 95, 18, 26);
-    g.lineStyle(5, 0x666666, 1);
-    g.fillStyle(0xffee00, 1);
-    g.beginPath();
-    g.moveTo(20, 60);
-    g.lineTo(35, 95);
-    g.lineTo(20, 95);
-    g.lineTo(38, 135);
-    g.lineTo(28, 100);
-    g.lineTo(43, 100);
-    g.closePath();
-    g.fillPath();
-    g.strokePath();
+  make('mage_ko', 150, 190, () => {
+    face(g, 65, 110, 46, { fill: 0x22cc22, defeated: true });
+    g.lineStyle(4, 0x5a00b3, 1);
+    g.fillStyle(0x9b30ff, 1);
+    g.fillTriangle(65, 8, 20, 78, 110, 78);
+    g.strokeTriangle(65, 8, 20, 78, 110, 78);
+    g.fillStyle(0xffff00, 1);
+    [[45, 40], [70, 55], [85, 35], [55, 65]].forEach(([sx, sy]) => {
+      star5(g, sx, sy, 6, 3, 0xffff00, 0xd4c400);
+    });
+  });
+
+  make('goliath', 190, 210, () => {
+    face(g, 115, 110, 60, { fill: 0x22cc22, angry: true });
+    lightningStaff(g, 35, 200, -12, 1.1);
   });
 
   make('star_boss', 260, 260, () => {
@@ -187,9 +239,10 @@ export function registerTextures(scene) {
       g.fillStyle(0x111111, 1);
       g.fillTriangle(55, 10, 8, 78, 102, 78);
       g.strokeTriangle(55, 10, 8, 78, 102, 78);
-      if (i === 1) {
+      if (i === 0) {
         g.fillStyle(0x4499ff, 1);
-        g.fillTriangle(55, 35, 45, 50, 65, 50);
+        g.fillTriangle(55, 26, 43, 46, 67, 46);
+        g.fillTriangle(55, 66, 43, 46, 67, 46);
       }
     });
   });
@@ -215,9 +268,9 @@ export function registerTextures(scene) {
     g.fillEllipse(70, 105, 22, 14);
   });
 
-  make('king', 160, 190, () => {
-    face(g, 65, 110, 48, { fill: 0x22cc22, angry: true });
-    sword(g, 130, 175, -25, 1.3);
+  make('king', 200, 230, () => {
+    face(g, 75, 130, 48, { fill: 0x22cc22, angry: true });
+    sword(g, 150, 200, -20, 2.0);
   });
 
   make('shopkeeper', 110, 110, () => {
@@ -260,6 +313,16 @@ export function registerTextures(scene) {
     g.fillEllipse(50, 70, 20, 60);
     g.fillStyle(0xffffff, 1);
     g.fillEllipse(50, 90, 8, 30);
+  });
+
+  make('explosion_burst', 300, 220, () => {
+    spikyBurst(g, 150, 110, 150, 60, 0xff2200);
+    spikyBurst(g, 150, 110, 110, 45, 0xff9900);
+    spikyBurst(g, 150, 110, 70, 30, 0xffee00);
+  });
+
+  make('black_star_icon', 50, 50, () => {
+    star5(g, 25, 25, 22, 9, 0x000000, 0x000000);
   });
 
   make('sign_board', 240, 170, () => {
@@ -316,21 +379,62 @@ export function registerTextures(scene) {
     }
   });
 
-  make('log', 200, 80, () => {
-    g.lineStyle(3, 0x4a2f18, 1);
-    g.fillStyle(0x8b5a2b, 1);
-    g.fillRoundedRect(20, 12, 160, 56, 26);
-    g.strokeRoundedRect(20, 12, 160, 56, 26);
-    g.lineStyle(2, 0x6b4423, 0.7);
-    [55, 85, 115, 145].forEach((lx) => g.lineBetween(lx, 16, lx, 64));
-    [20, 180].forEach((ex) => {
-      g.fillStyle(0xd2a679, 1);
-      g.fillEllipse(ex, 40, 22, 30);
-      g.lineStyle(2, 0x4a2f18, 1);
-      g.strokeEllipse(ex, 40, 22, 30);
-      g.strokeEllipse(ex, 40, 13, 17);
-      g.strokeEllipse(ex, 40, 5, 7);
-    });
+  make('longrock', 900, 110, () => {
+    g.lineStyle(4, 0x444444, 1);
+    g.fillStyle(0x6e6e6e, 1);
+    g.fillRect(0, 0, 900, 110);
+    g.strokeRect(0, 0, 900, 110);
+    g.lineStyle(2, 0x555555, 0.6);
+    for (let i = 0; i < 12; i++) {
+      const x = 40 + i * 70;
+      g.lineBetween(x, 10, x + 20, 100);
+    }
+  });
+
+  make('mug', 50, 54, () => {
+    g.lineStyle(3, 0x333333, 1);
+    g.fillStyle(0xffffff, 1);
+    g.fillRect(6, 10, 28, 34);
+    g.strokeRect(6, 10, 28, 34);
+    g.fillStyle(0x6b3d1a, 1);
+    g.fillRect(9, 13, 22, 8);
+    g.lineStyle(3, 0x333333, 1);
+    g.beginPath();
+    g.arc(34, 27, 10, Phaser.Math.DegToRad(-70), Phaser.Math.DegToRad(70), false);
+    g.strokePath();
+  });
+
+  make('tattoo_mark', 60, 60, () => {
+    cloudPuff(g, 30, 26, 0xdddddd, 1);
+    g.lineStyle(2, 0x888888, 1);
+    g.strokeCircle(16, 30, 12);
+    g.strokeCircle(30, 22, 14);
+    g.strokeCircle(42, 30, 10);
+    g.lineStyle(3, 0x333333, 1);
+    g.fillStyle(0xffee00, 1);
+    g.beginPath();
+    g.moveTo(30, 36);
+    g.lineTo(22, 50);
+    g.lineTo(29, 50);
+    g.lineTo(24, 60);
+    g.lineTo(36, 46);
+    g.lineTo(29, 46);
+    g.closePath();
+    g.fillPath();
+    g.strokePath();
+  });
+
+  make('breath_cloud', 60, 44, () => {
+    g.lineStyle(2, 0x999999, 0.8);
+    cloudPuff(g, 30, 24, 0xdddddd, 0.9);
+    g.strokeCircle(16, 28, 12);
+    g.strokeCircle(30, 20, 14);
+    g.strokeCircle(44, 28, 11);
+  });
+
+  make('cord', 8, 160, () => {
+    g.fillStyle(0x555555, 1);
+    g.fillRect(2, 0, 4, 160);
   });
 
   make('potion_red', 46, 56, () => {
@@ -356,6 +460,79 @@ export function registerTextures(scene) {
     g.fillTriangle(4, 16, 42, 16, 23, 40);
     g.fillCircle(14, 15, 12);
     g.fillCircle(32, 15, 12);
+  });
+
+  make('icon_sun', 40, 40, () => {
+    g.fillStyle(0xffdd00, 1);
+    g.fillCircle(20, 20, 10);
+    g.lineStyle(3, 0xffaa00, 1);
+    for (let i = 0; i < 8; i++) {
+      const a = Phaser.Math.DegToRad(i * 45);
+      g.lineBetween(20 + Math.cos(a) * 13, 20 + Math.sin(a) * 13, 20 + Math.cos(a) * 18, 20 + Math.sin(a) * 18);
+    }
+  });
+
+  make('icon_lightning', 40, 40, () => {
+    g.lineStyle(2, 0x998800, 1);
+    g.fillStyle(0xffee00, 1);
+    g.beginPath();
+    g.moveTo(22, 2);
+    g.lineTo(10, 22);
+    g.lineTo(18, 22);
+    g.lineTo(14, 38);
+    g.lineTo(30, 16);
+    g.lineTo(22, 16);
+    g.closePath();
+    g.fillPath();
+    g.strokePath();
+  });
+
+  make('icon_moon', 40, 40, () => {
+    g.fillStyle(0xaaaaaa, 1);
+    g.fillCircle(20, 20, 15);
+    g.fillStyle(0xffffff, 1);
+    g.fillCircle(27, 16, 14);
+  });
+
+  make('icon_water', 40, 40, () => {
+    g.lineStyle(2, 0x0077aa, 1);
+    g.fillStyle(0x22bbee, 1);
+    g.beginPath();
+    g.moveTo(20, 4);
+    g.arc(20, 24, 16, Phaser.Math.DegToRad(-125), Phaser.Math.DegToRad(125), false);
+    g.closePath();
+    g.fillPath();
+    g.strokePath();
+  });
+
+  make('icon_heart', 40, 40, () => {
+    g.fillStyle(0x111111, 1);
+    g.fillTriangle(4, 16, 36, 16, 20, 38);
+    g.fillCircle(13, 15, 11);
+    g.fillCircle(27, 15, 11);
+  });
+
+  make('icon_log', 40, 40, () => {
+    g.lineStyle(2, 0x4a2f18, 1);
+    g.fillStyle(0x8b5a2b, 1);
+    g.fillRoundedRect(4, 12, 32, 16, 8);
+    g.strokeRoundedRect(4, 12, 32, 16, 8);
+    g.fillStyle(0xd2a679, 1);
+    g.fillEllipse(6, 20, 6, 9);
+    g.strokeEllipse(6, 20, 6, 9);
+  });
+
+  make('icon_noentry', 40, 40, () => {
+    g.lineStyle(4, 0xcc0000, 1);
+    g.fillStyle(0xffffff, 1);
+    g.fillCircle(20, 20, 16);
+    g.strokeCircle(20, 20, 16);
+    g.lineBetween(8, 20, 32, 20);
+  });
+
+  make('icon_explosion', 40, 40, () => {
+    g.fillStyle(0xff9900, 1);
+    spikyBurst(g, 20, 20, 18, 8, 0xff9900, 8);
   });
 
   g.destroy();

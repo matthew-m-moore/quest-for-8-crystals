@@ -40,6 +40,13 @@ Checkpoint markers are defined in `CHECKPOINTS` in `src/script.js` and map to
 scene). When adding a new major scene/battle, add a marker + a `CHECKPOINTS`
 entry for it — cheap to add, saves a lot of replaying later.
 
+3. **`?perfect=1`** forces every attack/guard timing minigame (`TimingBar`) to
+   resolve as a perfect hit automatically, instead of waiting for a
+   press. Combine with `?start=<marker>` to jump straight into a fight and
+   blow through it while testing story/reward/combat-math changes — you
+   almost never actually care about landing the timing bar itself when
+   you're debugging something else. Implemented in `src/ui/TimingBar.js`.
+
 ## Lessons learned this session
 
 - **No Node/npm/Homebrew on this machine.** Don't assume a build toolchain
@@ -66,3 +73,12 @@ entry for it — cheap to add, saves a lot of replaying later.
   `Scale.FIT` — when clicking via browser automation, map screenshot pixel
   coordinates back to game coordinates (or just click near the center of
   large UI elements like the dialogue box, which tolerates some slop).
+- **Any timing/reflex minigame needs a debug bypass from day one**, not
+  bolted on later. A human tester eyeballs the marker and reacts; automation
+  can only guess a delay from a screenshot and gets it wrong most of the
+  time (confirmed the hard way — repeated blind `wait`-then-`space` attempts
+  against the mage kept missing and triggering real defeats). Wasted several
+  fight attempts before adding `?perfect=1`. General rule for future games
+  with any kind of timing/aim/reaction mechanic: build the "force success"
+  debug hook alongside the mechanic itself, so combat/story logic can be
+  tested independently of skill at the minigame.

@@ -2,6 +2,17 @@ import { GameState } from '../state.js';
 import { makeEnemyInstance } from '../enemies.js';
 import { TimingBar } from '../ui/TimingBar.js';
 
+const SPELLS = [
+  { key: 'sun', texture: 'icon_sun', name: 'Fireball', dmg: [6, 8], target: 'single' },
+  { key: 'lightning', texture: 'icon_lightning', name: 'Lightning', dmg: [5, 7], target: 'single', stun: true },
+  { key: 'moon', texture: 'icon_moon', name: 'Drain', dmg: [4, 6], target: 'single', drain: true },
+  { key: 'water', texture: 'icon_water', name: 'Heal', heal: [5, 7], target: 'self' },
+  { key: 'heart', texture: 'icon_heart', name: 'Full Heal', fullHeal: true, target: 'self' },
+  { key: 'log', texture: 'icon_log', name: 'Guard', shield: true, target: 'self' },
+  { key: 'noentry', texture: 'icon_noentry', name: 'Immunity', immune: 2, target: 'self' },
+  { key: 'explosion', texture: 'icon_explosion', name: 'Explosion', dmg: [3, 5], target: 'all' },
+];
+
 export class BattleScene extends Phaser.Scene {
   constructor() {
     super('Battle');
@@ -23,8 +34,11 @@ export class BattleScene extends Phaser.Scene {
     this.add.rectangle(w / 2, h - 60, w, 120, 0x0fb3cc).setDepth(-90);
 
     this.timingBar = new TimingBar(this);
+    this.shieldActive = false;
+    this.immuneCount = 0;
 
-    this.playerSprite = this.add.image(200, h - 190, 'hero').setScale(1.2);
+    const heroTexture = GameState.hasFlag('item_staff') ? 'hero_staff' : 'hero';
+    this.playerSprite = this.add.image(200, h - 190, heroTexture).setScale(1.2);
     this.playerHpBar = this.makeBar(120, h - 300, 160);
     this.playerLabel = this.add.text(120, h - 320, '', { fontSize: '16px', color: '#111111', fontStyle: 'bold' });
 
@@ -87,11 +101,11 @@ export class BattleScene extends Phaser.Scene {
 
   buildMenu() {
     const h = this.scale.height;
-    const specText = () => `Special (${this.specialCharge}/${this.specialMax})`;
+    const specText = () => `${GameState.hasFlag('item_staff') ? 'Magic' : 'Special'} (${this.specialCharge}/${this.specialMax})`;
 
     this.attackBtn = this.makeMenuButton(90, h - 60, 'Attack', () => this.playerAction('attack'));
-    this.specialBtn = this.makeMenuButton(260, h - 60, specText(), () => this.playerAction('special'));
-    this.runBtn = this.makeMenuButton(460, h - 60, 'Run', () => this.playerAction('run'));
+    this.specialBtn = this.makeMenuButton(280, h - 60, specText(), () => this.playerAction('special'));
+    this.runBtn = this.makeMenuButton(480, h - 60, 'Run', () => this.playerAction('run'));
 
     this.specTextFn = specText;
   }
@@ -135,6 +149,75 @@ export class BattleScene extends Phaser.Scene {
     });
   }
 
+  pickSpell() {
+    return new Promise((resolve) => {
+      const w = this.scale.width;
+      const h = this.scale.height;
+      const created = [];
+      const panel = this.add.rectangle(w / 2, h / 2, 480, 210, 0xffffff, 0.98).setStrokeStyle(4, 0x333333).setDepth(1600);
+      const title = this.add.text(w / 2, h / 2 - 85, 'Choose a spell', {
+        fontSize: '18px', fontStyle: 'bold', color: '#333333',
+      }).setOrigin(0.5).setDepth(1601);
+      created.push(panel, title);
+
+      const cleanup = () => created.forEach((o) => o.destroy());
+
+      SPELLS.forEach((sp, i) => {
+        const col = i % 4;
+        const row = Math.floor(i / 4);
+        const x = w / 2 - 150 + col * 100;
+        const y = h / 2 - 15 + row * 75;
+        const bg = this.add.rectangle(x, y, 56, 56, 0xf0f0f0).setStrokeStyle(2, 0x999999).setDepth(1600.5);
+        const icon = this.add.image(x, y - 6, sp.texture).setScale(1.1).setDepth(1601);
+        const label = this.add.text(x, y + 22, sp.name, {
+          fontSize: '10px', color: '#333333',
+        }).setOrigin(0.5).setDepth(1601);
+        const zone = this.add.zone(x, y, 60, 70).setInteractive({ useHandCursor: true }).setDepth(1602);
+        zone.on('pointerdown', () => { cleanup(); resolve(sp); });
+        created.push(bg, icon, label, zone);
+      });
+    });
+  }
+
+  async applySpell(sp, quality, primaryTarget) {
+    const mult = quality === 'perfect' ? 1.3 : quality === 'good' ? 1 : 0.7;
+
+    if (sp.target === 'self') {
+      if (sp.fullHeal) {
+        GameState.heal();
+        await this.toast('Fully healed!', { color: '#33ff66' });
+      } else if (sp.heal) {
+        const amt = Math.round(Phaser.Math.Between(sp.heal[0], sp.heal[1]) * mult);
+        GameState.hp = Math.min(GameState.maxHp, GameState.hp + amt);
+        await this.toast(`+${amt} HP`, { color: '#33ff66' });
+      } else if (sp.shield) {
+        this.shieldActive = true;
+        await this.toast('Shield up!', { color: '#88ccff' });
+      } else if (sp.immune) {
+        this.immuneCount = sp.immune;
+        await this.toast('Immunity!', { color: '#88ccff' });
+      }
+      this.refreshBars();
+      return;
+    }
+
+    const targets = sp.target === 'all' ? this.enemies.filter((e) => e.alive) : [primaryTarget];
+    for (const t of targets) {
+      const dmgMult = t.playerDmgMult ?? 1;
+      const dmg = Math.max(1, Math.round(Phaser.Math.Between(sp.dmg[0], sp.dmg[1]) * mult * dmgMult));
+      t.hp = Math.max(0, t.hp - dmg);
+      this.bump(t.sprite);
+      if (sp.drain) GameState.hp = Math.min(GameState.maxHp, GameState.hp + Math.round(dmg / 2));
+      if (sp.stun) t.stunned = true;
+      if (t.hp <= 0 && t.alive) {
+        t.alive = false;
+        this.tweens.add({ targets: t.sprite, alpha: 0, y: t.sprite.y + 30, duration: 400 });
+      }
+    }
+    this.refreshBars();
+    await this.toast(`${sp.name}!`, { color: '#ffcc00' });
+  }
+
   waitClick() {
     return new Promise((resolve) => {
       this.input.once('pointerdown', resolve);
@@ -166,45 +249,69 @@ export class BattleScene extends Phaser.Scene {
       const target = this.enemies.find((e) => e.alive);
       if (action === 'attack' || action === 'special') {
         const isSpecial = action === 'special';
-        const quality = await this.timingBar.run({
-          label: isSpecial ? 'SPECIAL ATTACK! Press SPACE!' : 'Press SPACE to attack!',
-        });
-        const base = isSpecial ? Phaser.Math.Between(4, 6) : Phaser.Math.Between(1, 2);
-        const mult = quality === 'perfect' ? 2 : quality === 'good' ? 1 : 0.5;
-        const dmg = Math.max(1, Math.round(base * mult));
+        const useMagic = isSpecial && GameState.hasFlag('item_staff');
 
-        target.hp = Math.max(0, target.hp - dmg);
-        this.refreshBars();
-        this.bump(target.sprite);
-        const qLabel = quality === 'perfect' ? 'PERFECT!' : quality === 'good' ? 'Nice!' : 'Missed the timing...';
-        await this.toast(`${qLabel}  -${dmg} HP`, {
-          x: target.sprite.x, y: target.sprite.y - 100, color: quality === 'miss' ? '#cccccc' : '#ffcc00', size: '22px',
-        });
-
-        if (isSpecial) {
+        if (useMagic) {
+          const sp = await this.pickSpell();
+          const quality = await this.timingBar.run({ label: `${sp.name}! Press SPACE!` });
+          await this.applySpell(sp, quality, target);
           this.specialCharge = 0;
         } else {
-          this.specialCharge = Math.min(this.specialMax, this.specialCharge + 3);
-        }
+          const quality = await this.timingBar.run({
+            label: isSpecial ? 'SPECIAL ATTACK! Press SPACE!' : 'Press SPACE to attack!',
+          });
+          const base = isSpecial ? Phaser.Math.Between(4, 6) : Phaser.Math.Between(1, 2);
+          const qualityMult = quality === 'perfect' ? 2 : quality === 'good' ? 1 : 0.5;
+          const dmgMult = target.playerDmgMult ?? 1;
+          const dmg = Math.max(1, Math.round(base * qualityMult * dmgMult));
 
-        if (target.hp <= 0) {
-          target.alive = false;
+          target.hp = Math.max(0, target.hp - dmg);
           this.refreshBars();
-          await this.toast(`${target.name} defeated!`, { x: target.sprite.x, color: '#33ff66' });
-          this.tweens.add({ targets: target.sprite, alpha: 0, y: target.sprite.y + 30, duration: 400 });
+          this.bump(target.sprite);
+          const qLabel = quality === 'perfect' ? 'PERFECT!' : quality === 'good' ? 'Nice!' : 'Missed the timing...';
+          await this.toast(`${qLabel}  -${dmg} HP`, {
+            x: target.sprite.x, y: target.sprite.y - 100, color: quality === 'miss' ? '#cccccc' : '#ffcc00', size: '22px',
+          });
+
+          if (isSpecial) {
+            this.specialCharge = 0;
+          } else {
+            this.specialCharge = Math.min(this.specialMax, this.specialCharge + 3);
+          }
+
+          if (target.hp <= 0) {
+            target.alive = false;
+            this.refreshBars();
+            await this.toast(`${target.name} defeated!`, { x: target.sprite.x, color: '#33ff66' });
+            this.tweens.add({ targets: target.sprite, alpha: 0, y: target.sprite.y + 30, duration: 400 });
+          }
         }
       }
 
       const stillAlive = this.enemies.filter((e) => e.alive);
       if (stillAlive.length === 0) return this.onVictory();
 
-      const attacker = Phaser.Utils.Array.GetRandom(stillAlive);
+      const availableAttackers = stillAlive.filter((e) => !e.stunned);
+      const attacker = Phaser.Utils.Array.GetRandom(availableAttackers.length ? availableAttackers : stillAlive);
+      stillAlive.forEach((e) => { e.stunned = false; });
+
+      const attackerCasts = attacker.usesMagic && Math.random() < 0.4;
       const guardQuality = await this.timingBar.run({
-        label: `${attacker.name} attacks! Press SPACE to guard!`,
-        speedMs: 950, minTargetW: 130, maxTargetW: 170, perfectRatio: 0.5,
+        label: `${attacker.name} ${attackerCasts ? 'casts a spell' : 'attacks'}! Press SPACE to guard!`,
+        speedMs: 900, minTargetW: 100, maxTargetW: 130, perfectRatio: 0.45,
       });
-      const rawDmg = Phaser.Math.Between(attacker.atkMin, attacker.atkMax);
-      const guardMult = guardQuality === 'perfect' ? 0 : guardQuality === 'good' ? 0.5 : 1;
+      const rawDmg = attackerCasts
+        ? Phaser.Math.Between(attacker.atkMax + 2, attacker.atkMax + 5)
+        : Phaser.Math.Between(attacker.atkMin, attacker.atkMax);
+
+      let guardMult = guardQuality === 'perfect' ? 0 : guardQuality === 'good' ? 0.5 : 1;
+      if (this.immuneCount > 0) {
+        guardMult = 0;
+        this.immuneCount--;
+      } else if (this.shieldActive) {
+        guardMult = 0;
+        this.shieldActive = false;
+      }
       const dmgTaken = Math.round(rawDmg * guardMult);
 
       GameState.hp = Math.max(0, GameState.hp - dmgTaken);

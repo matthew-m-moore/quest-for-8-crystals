@@ -1,5 +1,12 @@
 // A Paper Mario style "action command" timing prompt: a marker sweeps a bar,
 // the player taps/presses SPACE when it's over the target zone.
+
+// `?perfect=1` in the URL forces every attack/guard timing to land perfect.
+// Manually landing these via browser automation (or just a mouse) is
+// unreliable to time from screenshots -- this exists so combat logic and
+// content can be tested without fighting the minigame itself. See CLAUDE.md.
+const FORCE_PERFECT = new URLSearchParams(window.location.search).has('perfect');
+
 export class TimingBar {
   constructor(scene) {
     this.scene = scene;
@@ -11,6 +18,9 @@ export class TimingBar {
     label = 'Press SPACE!', x, y, width = 320, speedMs = 850,
     minTargetW = 60, maxTargetW = 90, perfectRatio = 0.4,
   } = {}) {
+    if (FORCE_PERFECT) {
+      return new Promise((resolve) => this.scene.time.delayedCall(120, () => resolve('perfect')));
+    }
     return new Promise((resolve) => {
       const scene = this.scene;
       const cx = x ?? scene.scale.width / 2;
