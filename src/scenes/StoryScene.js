@@ -100,12 +100,13 @@ export class StoryScene extends Phaser.Scene {
 
   // `overlays` lets a sprite carry baked-on decoration (e.g. text/portrait
   // painted onto a sign), positioned relative to the sprite's own center.
-  stepSprite({ id, texture, x, y, scale = 1, flipX = false, overlays = [] }) {
+  stepSprite({ id, texture, x, y, scale = 1, flipX = false, angle = 0, duration = 180, overlays = [] }) {
     let obj = this.sprites[id];
     if (!obj) {
       const mainImage = this.add.image(0, 0, texture).setFlipX(flipX);
       obj = this.add.container(x, y, [mainImage]);
       obj.mainImage = mainImage;
+      obj.angle = angle;
       overlays.forEach((ov) => {
         if (ov.type === 'text') {
           const t = this.add.text(ov.dx || 0, ov.dy || 0, ov.text, {
@@ -126,7 +127,7 @@ export class StoryScene extends Phaser.Scene {
       this.tweens.add({ targets: obj, scale, duration: 220, ease: 'Back.easeOut' });
     } else {
       obj.mainImage?.setTexture(texture);
-      this.tweens.add({ targets: obj, x, y, scale, duration: 180 });
+      this.tweens.add({ targets: obj, x, y, scale, angle, duration });
     }
   }
 

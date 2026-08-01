@@ -106,6 +106,10 @@ export function registerTextures(scene) {
     sword(g, 118, 138, 25, 1);
   });
 
+  make('hero_face', 110, 110, () => {
+    face(g, 55, 55, 46, { fill: 0xeaeaea });
+  });
+
   make('grunt', 110, 110, () => {
     face(g, 55, 55, 46, { fill: 0x22cc22, angry: true });
   });
@@ -293,14 +297,21 @@ export function registerTextures(scene) {
     }
   });
 
-  make('rock', 90, 90, () => {
-    g.lineStyle(3, 0x555555, 1);
-    g.fillStyle(0x999999, 1);
-    g.fillCircle(45, 50, 40);
-    g.strokeCircle(45, 50, 40);
-    g.lineStyle(2, 0x777777, 1);
-    g.lineBetween(20, 40, 40, 55);
-    g.lineBetween(50, 30, 60, 60);
+  make('log', 200, 80, () => {
+    g.lineStyle(3, 0x4a2f18, 1);
+    g.fillStyle(0x8b5a2b, 1);
+    g.fillRoundedRect(20, 12, 160, 56, 26);
+    g.strokeRoundedRect(20, 12, 160, 56, 26);
+    g.lineStyle(2, 0x6b4423, 0.7);
+    [55, 85, 115, 145].forEach((lx) => g.lineBetween(lx, 16, lx, 64));
+    [20, 180].forEach((ex) => {
+      g.fillStyle(0xd2a679, 1);
+      g.fillEllipse(ex, 40, 22, 30);
+      g.lineStyle(2, 0x4a2f18, 1);
+      g.strokeEllipse(ex, 40, 22, 30);
+      g.strokeEllipse(ex, 40, 13, 17);
+      g.strokeEllipse(ex, 40, 5, 7);
+    });
   });
 
   make('potion_red', 46, 56, () => {
