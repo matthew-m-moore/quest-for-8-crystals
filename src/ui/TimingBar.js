@@ -7,7 +7,10 @@ export class TimingBar {
     this.container.setVisible(false);
   }
 
-  run({ label = 'Press SPACE!', x, y, width = 320, speedMs = 850 } = {}) {
+  run({
+    label = 'Press SPACE!', x, y, width = 320, speedMs = 850,
+    minTargetW = 60, maxTargetW = 90, perfectRatio = 0.4,
+  } = {}) {
     return new Promise((resolve) => {
       const scene = this.scene;
       const cx = x ?? scene.scale.width / 2;
@@ -15,9 +18,9 @@ export class TimingBar {
       const left = cx - width / 2;
       const right = cx + width / 2;
 
-      const targetW = 60 + Math.random() * 30;
+      const targetW = minTargetW + Math.random() * (maxTargetW - minTargetW);
       const targetX = left + targetW / 2 + Math.random() * (width - targetW);
-      const perfectW = targetW * 0.4;
+      const perfectW = targetW * perfectRatio;
 
       const track = scene.add.rectangle(cx, cy, width, 22, 0x222222).setStrokeStyle(3, 0x000000);
       const target = scene.add.rectangle(targetX, cy, targetW, 22, 0xffee00, 0.85);

@@ -151,10 +151,6 @@ export class BattleScene extends Phaser.Scene {
     while (true) {
       const aliveEnemies = this.enemies.filter((e) => e.alive);
       if (aliveEnemies.length === 0) return this.onVictory();
-      if (GameState.hp <= 0) {
-        GameState.hp = 1;
-        await this.toast('That was close!', { color: '#ff8800' });
-      }
 
       this.setMenuEnabled(true);
       const action = await new Promise((resolve) => {
@@ -203,18 +199,30 @@ export class BattleScene extends Phaser.Scene {
       if (stillAlive.length === 0) return this.onVictory();
 
       const attacker = Phaser.Utils.Array.GetRandom(stillAlive);
-      const guardQuality = await this.timingBar.run({ label: `${attacker.name} attacks! Press SPACE to guard!`, speedMs: 650 });
+      const guardQuality = await this.timingBar.run({
+        label: `${attacker.name} attacks! Press SPACE to guard!`,
+        speedMs: 950, minTargetW: 130, maxTargetW: 170, perfectRatio: 0.5,
+      });
       const rawDmg = Phaser.Math.Between(attacker.atkMin, attacker.atkMax);
       const guardMult = guardQuality === 'perfect' ? 0 : guardQuality === 'good' ? 0.5 : 1;
       const dmgTaken = Math.round(rawDmg * guardMult);
 
       GameState.hp = Math.max(0, GameState.hp - dmgTaken);
       this.refreshBars();
-      this.bump(this.playerSprite);
-      const gLabel = guardQuality === 'perfect' ? 'Perfect guard!' : guardQuality === 'good' ? 'Partial block!' : 'Ouch!';
-      await this.toast(`${gLabel}  -${dmgTaken} HP`, {
-        x: this.playerSprite.x, y: this.playerSprite.y - 130, color: dmgTaken === 0 ? '#33ff66' : '#ff5555', size: '20px',
-      });
+
+      if (dmgTaken === 0) {
+        await this.toast('Missed!', {
+          x: this.playerSprite.x, y: this.playerSprite.y - 130, color: '#33ff66', size: '20px',
+        });
+      } else {
+        this.bump(this.playerSprite);
+        const gLabel = guardQuality === 'good' ? 'Partial block!' : 'Ouch!';
+        await this.toast(`${gLabel}  -${dmgTaken} HP`, {
+          x: this.playerSprite.x, y: this.playerSprite.y - 130, color: '#ff5555', size: '20px',
+        });
+      }
+
+      if (GameState.hp <= 0) return this.onDefeat();
     }
   }
 
@@ -260,7 +268,40 @@ export class BattleScene extends Phaser.Scene {
     });
   }
 
+  async onDefeat() {
+    this.setMenuEnabled(false);
+    await this.toast('You were defeated...', { size: '28px', color: '#ff4444' });
+    await new Promise((resolve) => {
+      const w = this.scale.width;
+      const h = this.scale.height;
+      const panel = this.add.rectangle(w / 2, h / 2, 420, 190, 0xffffff, 0.98).setStrokeStyle(5, 0xaa2222).setDepth(1600);
+      const msg = this.add.text(w / 2, h / 2 - 45, 'You were defeated!', {
+        fontSize: '24px', fontStyle: 'bold', color: '#aa2222',
+      }).setOrigin(0.5).setDepth(1601);
+      const sub = this.add.text(w / 2, h / 2 - 5, 'Want to give it another go?', {
+        fontSize: '16px', color: '#555555',
+      }).setOrigin(0.5).setDepth(1601);
+      const retryBtn = this.add.text(w / 2, h / 2 + 55, 'Try Again', {
+        fontSize: '20px', fontStyle: 'bold', color: '#ffffff', backgroundColor: '#2266cc', padding: { x: 18, y: 10 },
+      }).setOrigin(0.5).setDepth(1601).setInteractive({ useHandCursor: true });
+      retryBtn.on('pointerdown', () => {
+        panel.destroy(); msg.destroy(); sub.destroy(); retryBtn.destroy();
+        resolve();
+      });
+    });
+
+    GameState.heal();
+    this.scene.restart({
+      enemyKeys: this.enemyKeys,
+      canRun: this.canRun,
+      introText: this.introText,
+      trophy: this.trophy,
+      returnIndex: this.returnIndex,
+    });
+  }
+
   finishBattle() {
+    GameState.heal();
     const story = this.scene.get('Story');
     this.scene.stop();
     story.resumeStory(this.returnIndex);

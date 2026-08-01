@@ -73,6 +73,7 @@ export class StoryScene extends Phaser.Scene {
       case 'launchRocket': return this.stepLaunchRocket();
       case 'crashRocket': return this.stepCrashRocket();
       case 'gotoIf': return this.stepGotoIf(step);
+      case 'goto': return this.stepGoto(step);
       case 'end': return this.stepEnd();
       default: return undefined;
     }
@@ -97,17 +98,36 @@ export class StoryScene extends Phaser.Scene {
     }
   }
 
-  stepSprite({ id, texture, x, y, scale = 1, flipX = false }) {
-    let img = this.sprites[id];
-    if (!img) {
-      img = this.add.image(x, y, texture).setScale(0.001);
-      this.sprites[id] = img;
-      this.tweens.add({ targets: img, scale, duration: 220, ease: 'Back.easeOut' });
+  // `overlays` lets a sprite carry baked-on decoration (e.g. text/portrait
+  // painted onto a sign), positioned relative to the sprite's own center.
+  stepSprite({ id, texture, x, y, scale = 1, flipX = false, overlays = [] }) {
+    let obj = this.sprites[id];
+    if (!obj) {
+      const mainImage = this.add.image(0, 0, texture).setFlipX(flipX);
+      obj = this.add.container(x, y, [mainImage]);
+      obj.mainImage = mainImage;
+      overlays.forEach((ov) => {
+        if (ov.type === 'text') {
+          const t = this.add.text(ov.dx || 0, ov.dy || 0, ov.text, {
+            fontSize: ov.fontSize || '16px',
+            fontStyle: ov.fontStyle || 'bold',
+            color: ov.color || '#111111',
+            align: ov.align || 'center',
+            wordWrap: ov.wrapWidth ? { width: ov.wrapWidth } : undefined,
+          }).setOrigin(0.5);
+          obj.add(t);
+        } else if (ov.type === 'image') {
+          const oi = this.add.image(ov.dx || 0, ov.dy || 0, ov.texture).setScale(ov.scale || 1);
+          obj.add(oi);
+        }
+      });
+      obj.setScale(0.001);
+      this.sprites[id] = obj;
+      this.tweens.add({ targets: obj, scale, duration: 220, ease: 'Back.easeOut' });
     } else {
-      img.setTexture(texture);
-      this.tweens.add({ targets: img, x, y, scale, duration: 180 });
+      obj.mainImage?.setTexture(texture);
+      this.tweens.add({ targets: obj, x, y, scale, duration: 180 });
     }
-    img.setFlipX(flipX);
   }
 
   stepRemoveSprite({ id }) {
@@ -294,6 +314,10 @@ export class StoryScene extends Phaser.Scene {
       return this.markers[skipTo];
     }
     return undefined;
+  }
+
+  stepGoto({ marker }) {
+    return this.markers[marker];
   }
 
   stepEnd() {

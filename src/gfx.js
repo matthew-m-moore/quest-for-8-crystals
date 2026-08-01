@@ -101,9 +101,9 @@ export function registerTextures(scene) {
     g.generateTexture(key, w, h);
   };
 
-  make('hero', 150, 150, () => {
+  make('hero', 180, 180, () => {
     face(g, 55, 75, 46, { fill: 0xeaeaea });
-    sword(g, 110, 130, -15, 1);
+    sword(g, 118, 138, 25, 1);
   });
 
   make('grunt', 110, 110, () => {

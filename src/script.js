@@ -56,9 +56,16 @@ export const tutorialScript = [
   { type: 'crashRocket' },
 
   { type: 'bg', sky: '#00ffff', ground: '#00ffff' },
-  { type: 'sprite', id: 'sign', texture: 'sign_board', x: 740, y: 320, scale: 1 },
+  {
+    type: 'sprite', id: 'sign', texture: 'sign_board', x: 740, y: 320, scale: 1,
+    overlays: [
+      {
+        type: 'text', text: 'Welcome to\nPlanet Bluestar', dx: 0, dy: -25,
+        fontSize: '16px', color: '#0a6e77', align: 'center', wrapWidth: 190,
+      },
+    ],
+  },
   { type: 'sprite', id: 'hero', texture: 'hero', x: 260, y: 420, scale: 1 },
-  { type: 'say', speaker: '', text: 'Welcome to Planet Bluestar.' },
   { type: 'say', speaker: 'You', text: 'ugh... where am I?' },
   { type: 'say', speaker: 'You', text: 'I need to find materials to repair the ship.' },
 
@@ -71,10 +78,16 @@ export const tutorialScript = [
   { type: 'clear' },
 
   { type: 'sprite', id: 'ladder', texture: 'ladder', x: 210, y: 300, scale: 0.9 },
-  { type: 'sprite', id: 'poster', texture: 'sign_board', x: 700, y: 340, scale: 1.15 },
+  {
+    type: 'sprite', id: 'poster', texture: 'sign_board', x: 700, y: 340, scale: 1.15,
+    overlays: [
+      { type: 'text', text: 'WANTED', dx: 0, dy: -55, fontSize: '20px', color: '#661111', fontStyle: 'bold' },
+      { type: 'image', texture: 'grunt', dx: 0, dy: -5, scale: 0.5 },
+      { type: 'text', text: '1000z', dx: 0, dy: 25, fontSize: '18px', color: '#222222', fontStyle: 'bold' },
+    ],
+  },
   { type: 'sprite', id: 'g1', texture: 'grunt', x: 640, y: 440, scale: 1 },
   { type: 'sprite', id: 'g2', texture: 'grunt', x: 720, y: 440, scale: 1 },
-  { type: 'say', speaker: '', text: 'WANTED: 1000 zoogels' },
   { type: 'say', speaker: 'You', text: '1000 zoogels?! We need that.' },
   {
     type: 'choice',
@@ -84,22 +97,29 @@ export const tutorialScript = [
       { label: "Use the old dead guy's body as a distraction", flag: 'distraction' },
     ],
   },
-  {
-    type: 'say', speaker: 'You',
-    text: (f) => (f.ladder
-      ? 'Alright — up the ladder, and... TIMBER!'
-      : "This feels wrong, but... sorry, old friend. You're a distraction now."),
-  },
+  { type: 'gotoIf', flag: 'ladder', skipTo: 'ladderOutcome' },
+
+  { type: 'say', speaker: 'You', text: "This feels wrong, but... sorry, old friend. You're a distraction now." },
   { type: 'clear' },
   {
     type: 'battle', enemies: ['bountyGrunt', 'grunt', 'grunt'], canRun: false,
-    intro: (f) => (f.ladder
-      ? 'The rock crushes two of them — one\'s still standing!'
-      : 'The distraction worked... mostly. Here they come!'),
+    intro: 'The distraction worked... mostly. Here they come!',
   },
   { type: 'reward', money: 8 },
+  { type: 'goto', marker: 'afterBounty' },
 
-  { type: 'clear' },
+  { type: 'say', marker: 'ladderOutcome', speaker: 'You', text: 'Alright — up the ladder, and...' },
+  { type: 'sprite', id: 'fallrock', texture: 'rock', x: 700, y: 120, scale: 1.5 },
+  { type: 'wait', ms: 300 },
+  { type: 'sprite', id: 'fallrock', texture: 'rock', x: 700, y: 430, scale: 1.5 },
+  { type: 'say', speaker: '', text: 'TIMBER! The rock flattens the guards before they even see it coming.' },
+  { type: 'removeSprite', id: 'fallrock' },
+  { type: 'removeSprite', id: 'g1' },
+  { type: 'removeSprite', id: 'g2' },
+  { type: 'reward', money: 8 },
+
+  { type: 'clear', marker: 'afterBounty' },
+
   { type: 'sprite', id: 'mage', texture: 'mage', x: 700, y: 380, scale: 1 },
   { type: 'sprite', id: 'hero', texture: 'hero', x: 220, y: 420, scale: 1 },
   { type: 'say', speaker: 'Mysterious Mage', text: 'I have been expecting you.' },
