@@ -1,7 +1,7 @@
 // Procedural sprite generation, styled after James's storyboard art:
 // flat shapes, thin dark outlines, simple dot eyes, no gradients/shading.
 
-function face(g, cx, cy, r, { fill, stroke = 0x333333, angry = false, closedHappy = false }) {
+function face(g, cx, cy, r, { fill, stroke = 0x333333, angry = false, closedHappy = false, defeated = false }) {
   g.lineStyle(4, stroke, 1);
   g.fillStyle(fill, 1);
   g.fillCircle(cx, cy, r);
@@ -10,6 +10,21 @@ function face(g, cx, cy, r, { fill, stroke = 0x333333, angry = false, closedHapp
   const eyeDx = r * 0.32;
   const eyeDy = -r * 0.1;
   const eyeR = r * 0.09;
+
+  if (defeated) {
+    const s = r * 0.14;
+    g.lineStyle(3, stroke, 1);
+    [-1, 1].forEach((dir) => {
+      const ex = cx + dir * eyeDx;
+      const ey = cy + eyeDy;
+      g.lineBetween(ex - s, ey - s, ex + s, ey + s);
+      g.lineBetween(ex - s, ey + s, ex + s, ey - s);
+    });
+    g.beginPath();
+    g.arc(cx, cy + r * 0.5, r * 0.3, Phaser.Math.DegToRad(0), Phaser.Math.DegToRad(180), false);
+    g.strokePath();
+    return;
+  }
 
   if (angry) {
     g.lineStyle(3, stroke, 1);
@@ -112,6 +127,10 @@ export function registerTextures(scene) {
 
   make('grunt', 110, 110, () => {
     face(g, 55, 55, 46, { fill: 0x22cc22, angry: true });
+  });
+
+  make('grunt_ko', 110, 110, () => {
+    face(g, 55, 55, 46, { fill: 0x22cc22, defeated: true });
   });
 
   make('mage', 150, 190, () => {

@@ -2,6 +2,19 @@
 // ("The quest for the 8 crystals to save the universe").
 // Step types: bg, sprite, removeSprite, clear, say, wait, choice, battle, reward, shop, end
 
+// Dev-only jump points, so a specific scene can be replayed without
+// clicking through everything before it. See CLAUDE.md "Debug checkpoints".
+export const CHECKPOINTS = [
+  { marker: 'cp_bluestar', label: 'Land on Bluestar' },
+  { marker: 'cp_bounty', label: 'Bounty board' },
+  { marker: 'afterBounty', label: 'Mage encounter' },
+  { marker: 'cp_goliath', label: 'Goliath' },
+  { marker: 'cp_graveyard', label: 'Graveyard fork' },
+  { marker: 'kingIntro', label: 'Swordsman king' },
+  { marker: 'cp_shop', label: 'Shop' },
+  { marker: 'cp_finalboss', label: 'Final boss' },
+];
+
 export const tutorialScript = [
   { type: 'bg', sky: '#ffffff', ground: null },
   { type: 'say', speaker: '', text: '20 minutes ago...' },
@@ -55,7 +68,7 @@ export const tutorialScript = [
   { type: 'say', speaker: 'You', text: "I'm gonna crash!!!" },
   { type: 'crashRocket' },
 
-  { type: 'bg', sky: '#00ffff', ground: '#00ffff' },
+  { type: 'bg', sky: '#00ffff', ground: '#00ffff', marker: 'cp_bluestar' },
   {
     type: 'sprite', id: 'sign', texture: 'sign_board', x: 740, y: 320, scale: 1,
     overlays: [
@@ -75,8 +88,9 @@ export const tutorialScript = [
   { type: 'say', speaker: 'You', text: 'Uh oh.' },
   { type: 'battle', enemies: ['grunt'], canRun: false },
   { type: 'reward', money: 4 },
+  { type: 'sprite', id: 'grunt', texture: 'grunt_ko', x: 700, y: 400, scale: 1.1 },
   { type: 'say', speaker: 'You', text: 'Nice — think I have the hang of this now.' },
-  { type: 'clear' },
+  { type: 'clear', marker: 'cp_bounty' },
 
   { type: 'sprite', id: 'ladder', texture: 'ladder', x: 210, y: 300, scale: 0.9 },
   {
@@ -135,7 +149,7 @@ export const tutorialScript = [
   { type: 'reward', money: 5, item: 'staff' },
   { type: 'say', speaker: '', text: 'Staff collected!' },
 
-  { type: 'clear' },
+  { type: 'clear', marker: 'cp_goliath' },
   { type: 'sprite', id: 'goliath', texture: 'goliath', x: 700, y: 360, scale: 1 },
   { type: 'sprite', id: 'hero', texture: 'hero', x: 220, y: 420, scale: 1 },
   { type: 'say', speaker: 'Goliath', text: 'Ye shall not PASS.' },
@@ -145,7 +159,7 @@ export const tutorialScript = [
   },
   { type: 'reward', money: 5 },
 
-  { type: 'clear' },
+  { type: 'clear', marker: 'cp_graveyard' },
   { type: 'sprite', id: 'sign1', texture: 'sign_board', x: 620, y: 330, scale: 0.9 },
   { type: 'sprite', id: 'sign2', texture: 'sign_board', x: 860, y: 330, scale: 0.9 },
   { type: 'say', speaker: '', text: 'Warning: haunted graveyard. Enter if you dare.' },
@@ -199,7 +213,7 @@ export const tutorialScript = [
   },
   { type: 'reward', money: 8 },
 
-  { type: 'clear' },
+  { type: 'clear', marker: 'cp_shop' },
   { type: 'sprite', id: 'stand', texture: 'shop_stand', x: 700, y: 330, scale: 1 },
   { type: 'sprite', id: 'hero', texture: 'hero', x: 220, y: 420, scale: 1 },
   { type: 'say', speaker: 'Shopkeeper', text: 'Huh, why are you here?' },
@@ -207,7 +221,7 @@ export const tutorialScript = [
   { type: 'shop' },
   { type: 'say', speaker: 'Shopkeeper', text: 'Good luck.' },
 
-  { type: 'clear' },
+  { type: 'clear', marker: 'cp_finalboss' },
   { type: 'sprite', id: 'starboss', texture: 'star_boss', x: 700, y: 330, scale: 1 },
   { type: 'sprite', id: 'hero', texture: 'hero', x: 220, y: 440, scale: 1 },
   { type: 'say', speaker: 'The Star', text: 'Grrr — you killed all my minions, but still I remain! Ahahahah!' },
@@ -221,3 +235,7 @@ export const tutorialScript = [
   { type: 'bg', sky: '#ffffff', ground: null },
   { type: 'end' },
 ];
+
+export function markerIndex(marker) {
+  return tutorialScript.findIndex((s) => s.marker === marker);
+}
