@@ -1,24 +1,27 @@
-// Docked below the HUD at the top of the screen, out of the way of
-// character sprites (which live in the lower two-thirds of the frame).
+// Docked below the HUD at the top-left of the screen, out of the way of
+// character sprites (lower two-thirds of the frame) and the black star
+// background element (top-right) that needs to stay visible.
 const BOX_TOP = 54;
 const BOX_HEIGHT = 118;
+const BOX_LEFT = 20;
+const BOX_WIDTH = 700;
 
 export class DialogueBox {
   constructor(scene) {
     this.scene = scene;
-    const w = scene.scale.width;
+    const boxCenterX = BOX_LEFT + BOX_WIDTH / 2;
     const boxCenterY = BOX_TOP + BOX_HEIGHT / 2;
     this.container = scene.add.container(0, 0).setDepth(1000);
 
-    this.bg = scene.add.rectangle(w / 2, boxCenterY, w - 40, BOX_HEIGHT, 0xffffff, 0.96)
+    this.bg = scene.add.rectangle(boxCenterX, boxCenterY, BOX_WIDTH, BOX_HEIGHT, 0xffffff, 0.96)
       .setStrokeStyle(4, 0x333333);
-    this.nameText = scene.add.text(40, BOX_TOP + 10, '', {
+    this.nameText = scene.add.text(BOX_LEFT + 20, BOX_TOP + 10, '', {
       fontSize: '20px', fontStyle: 'bold', color: '#333333',
     });
-    this.bodyText = scene.add.text(40, BOX_TOP + 38, '', {
-      fontSize: '22px', color: '#222222', wordWrap: { width: w - 100 },
+    this.bodyText = scene.add.text(BOX_LEFT + 20, BOX_TOP + 38, '', {
+      fontSize: '22px', color: '#222222', wordWrap: { width: BOX_WIDTH - 60 },
     });
-    this.hint = scene.add.text(w - 60, BOX_TOP + BOX_HEIGHT - 28, '▼', {
+    this.hint = scene.add.text(BOX_LEFT + BOX_WIDTH - 40, BOX_TOP + BOX_HEIGHT - 28, '▼', {
       fontSize: '18px', color: '#888888',
     });
     this.container.add([this.bg, this.nameText, this.bodyText, this.hint]);
@@ -27,7 +30,7 @@ export class DialogueBox {
     this._typeTimer = null;
     this._onAdvance = null;
 
-    this.zone = scene.add.zone(w / 2, boxCenterY, w - 40, BOX_HEIGHT).setInteractive();
+    this.zone = scene.add.zone(boxCenterX, boxCenterY, BOX_WIDTH, BOX_HEIGHT).setInteractive();
     this.zone.on('pointerdown', () => this._advanceOrSkip());
     this.container.add(this.zone);
 

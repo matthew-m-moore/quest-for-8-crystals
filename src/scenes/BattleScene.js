@@ -59,7 +59,7 @@ export class BattleScene extends Phaser.Scene {
 
     this.menuTexts = {};
     this.specialCharge = 0;
-    this.specialMax = 20;
+    this.specialMax = 12;
     if (GameState.flags.nextBattleBonusCharge) {
       this.specialCharge = 5;
       GameState.flags.nextBattleBonusCharge = false;
@@ -103,9 +103,9 @@ export class BattleScene extends Phaser.Scene {
     const h = this.scale.height;
     const specText = () => `${GameState.hasFlag('item_staff') ? 'Magic' : 'Special'} (${this.specialCharge}/${this.specialMax})`;
 
-    this.attackBtn = this.makeMenuButton(90, h - 60, 'Attack', () => this.playerAction('attack'));
-    this.specialBtn = this.makeMenuButton(280, h - 60, specText(), () => this.playerAction('special'));
-    this.runBtn = this.makeMenuButton(480, h - 60, 'Run', () => this.playerAction('run'));
+    this.attackBtn = this.makeMenuButton(90, h - 70, 'Attack', () => this.playerAction('attack'));
+    this.specialBtn = this.makeMenuButton(280, h - 70, specText(), () => this.playerAction('special'));
+    this.runBtn = this.makeMenuButton(480, h - 70, 'Run', () => this.playerAction('run'));
 
     this.specTextFn = specText;
   }

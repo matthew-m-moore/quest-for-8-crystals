@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>The Quest for the 8 Crystals</title>
   <style>
     html, body {
@@ -15,7 +15,13 @@
     }
     #game-container {
       width: 100vw;
+      /* iOS Safari's 100vh includes space the collapsing toolbar can cover;
+         100dvh (dynamic viewport height) tracks what's actually visible.
+         The vh line is a fallback for browsers that don't support dvh. */
       height: 100vh;
+      height: 100dvh;
+      padding-bottom: env(safe-area-inset-bottom);
+      box-sizing: border-box;
       display: flex;
       align-items: center;
       justify-content: center;

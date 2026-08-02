@@ -325,6 +325,36 @@ export function registerTextures(scene) {
     star5(g, 25, 25, 22, 9, 0x000000, 0x000000);
   });
 
+  make('warning_sign', 220, 340, () => {
+    g.lineStyle(4, 0x000000, 1);
+    g.fillStyle(0xffffff, 1);
+    g.fillRect(10, 10, 200, 200);
+    g.strokeRect(10, 10, 200, 200);
+
+    g.lineStyle(6, 0x000000, 1);
+    g.fillStyle(0xffffff, 1);
+    g.beginPath();
+    g.arc(110, 140, 55, Phaser.Math.DegToRad(180), Phaser.Math.DegToRad(360), false);
+    g.lineTo(165, 175);
+    g.lineTo(55, 175);
+    g.closePath();
+    g.fillPath();
+    g.strokePath();
+
+    g.lineStyle(5, 0x000000, 1);
+    g.beginPath();
+    g.arc(122, 122, 18, Phaser.Math.DegToRad(210), Phaser.Math.DegToRad(330), false);
+    g.strokePath();
+
+    g.lineStyle(6, 0x000000, 1);
+    g.lineBetween(110, 70, 110, 50);
+    g.lineBetween(78, 78, 62, 62);
+    g.lineBetween(142, 78, 158, 62);
+
+    g.fillStyle(0x555555, 1);
+    g.fillRect(100, 210, 20, 120);
+  });
+
   make('sign_board', 240, 170, () => {
     g.lineStyle(4, 0x333333, 1);
     g.fillStyle(0xeeeeee, 1);
